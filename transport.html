@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Smart Public Transport Tracker</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root { --ink:#1b2a2f; --paper:#f6f7f4; --signal:#ffc933; --route:#1f6f8b; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:"Segoe UI",Arial,sans-serif; background:var(--paper); color:var(--ink); }
+
+    header { background:var(--ink); color:#fff; padding:14px 20px; border-bottom:6px solid var(--signal); }
+    header h1 { margin:0; font-size:1.4rem; }
+    header p { margin:4px 0 0; font-size:.9rem; color:#cfd8da; }
+
+    main { display:flex; flex-wrap:wrap; }
+    #map { flex:2 1 480px; height:75vh; min-height:400px; }
+    aside { flex:1 1 320px; padding:18px; }
+
+    label { font-weight:600; display:block; margin-bottom:6px; }
+    select { width:100%; padding:10px; font-size:1rem; border:2px solid var(--ink); border-radius:6px; background:#fff; }
+
+    .info { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #d5d9d3; }
+    .info strong { font-size:1.2rem; }
+
+    .crowd { color:#fff; padding:3px 14px; border-radius:14px; background:#7b8a8e; font-weight:600; }
+    .crowd.empty    { background:#2e9e5b; }
+    .crowd.moderate { background:#e0a100; }
+    .crowd.full     { background:#d64545; }
+
+    h2 { font-size:1.05rem; margin:22px 0 8px; }
+    table { width:100%; border-collapse:collapse; font-size:.92rem; }
+    th, td { text-align:left; padding:7px 4px; border-bottom:1px solid #d5d9d3; }
+    tr.active { background:#fff3c4; font-weight:600; }
+    td.st.Passed { color:#8a9599; }
+    td.st.Next { color:#b36b00; font-weight:700; }
+
+    .banner { background:#ffc933; color:#1b2a2f; padding:10px 12px; border-radius:6px; font-weight:700; margin-bottom:14px; }
+.hidden { display:none; }
+
+    .bus-icon { font-size:28px; line-height:30px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Smart Public Transport Tracker</h1>
+    <p>Route: Poonamallee to Thiruvanmiyur</p>
+  </header>
+
+  <main>
+    <div id="map"></div>
+
+    <aside>
+      <div id="banner" class="banner hidden"></div>
+      <label for="stopSelect">Your bus stop</label>
+      <select id="stopSelect"></select>
+
+      <div class="info"><span>Bus arrives in</span><strong id="eta">--</strong></div>
+      <div class="info"><span>Next stop of bus</span><strong id="nextStop">--</strong></div>
+      <div class="info"><span>Crowd level</span><span id="crowd" class="crowd">--</span></div>
+
+      <h2>Route and fare</h2>
+      <table id="fareTable">
+        <thead><tr><th>Stop</th><th>Fare</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </aside>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // ---------- 1. Map ----------
+    const map = L.map("map").setView([13.0, 80.2], 12);
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+      attribution: "Tiles &copy; Esri",
+      maxZoom: 18
+    }).addTo(map);
+
+    // ---------- 2. Stops (fare = sample fare from the first stop) ----------
+    const stops = [
+      { name: "Poonamallee Bus Depot",   lat: 13.0520, lng: 80.0948, fare: 0 },
+      { name: "Porur Junction",          lat: 13.0382, lng: 80.1565, fare: 10 },
+       { name: "Ramapuram",     lat:  13.0310,lng: 80.1827, fare: 13 },
+      { name: "Guindy Bus Stand",        lat: 13.0067, lng: 80.2206, fare:    18 },
+       { name: "Anna University",    lat: 13.0112, lng: 80.2364 , fare: 20  },
+      
+       { name: "Adayar Bus Depot",   lat: 12.9979,  lng:80.2563  ,         fare: 23 },
+    
+      { name: "Thiruvanmiyur Bus Depot", lat: 12.9830, lng: 80.2594, fare: 25 }
+    ];
+
+    // ---------- 3. Markers ----------
+    stops.forEach(function (s) {
+      L.marker([s.lat, s.lng]).addTo(map).bindPopup(s.name);
+    });
+
+    // ---------- 4. Route line ----------
+    const routePoints = stops.map(function (s) {
+      return [s.lat, s.lng];
+    });
+    L.polyline(routePoints, { color: "#1f6f8b", weight: 5 }).addTo(map);
+    map.fitBounds(routePoints);
+
+    // ---------- 5. Bus path + stop positions ----------
+    const STEPS = 40;
+    const path = [];
+    const stopIndex = [];
+
+    for (let i = 0; i < stops.length - 1; i++) {
+      const a = stops[i];
+      const b = stops[i + 1];
+      stopIndex.push(path.length);
+      for (let s = 0; s < STEPS; s++) {
+        const t = s / STEPS;
+        path.push([
+          a.lat + (b.lat - a.lat) * t,
+          a.lng + (b.lng - a.lng) * t
+        ]);
+      }
+    }
+    const lastStop = stops[stops.length - 1];
+    stopIndex.push(path.length);
+    path.push([lastStop.lat, lastStop.lng]);
+
+    // ---------- 6. Bus marker ----------
+    const busIcon = L.divIcon({ html: "🚌", className: "bus-icon", iconSize: [30, 30] });
+    const bus = L.marker(path[0], { icon: busIcon }).addTo(map);
+
+    // ---------- 7. Info panel + fare table ----------
+    let pos = 0;
+    const SIM_SECONDS_PER_TICK = 15;
+    const ALERT_MINUTES = 5;  
+const ALERT_TICKS = (ALERT_MINUTES * 60) / SIM_SECONDS_PER_TICK;
+
+    const stopSelect = document.getElementById("stopSelect");
+    const etaBox = document.getElementById("eta");
+    const nextStopBox = document.getElementById("nextStop");
+    const crowdBox = document.getElementById("crowd");
+    const tableBody = document.querySelector("#fareTable tbody");
+    const bannerBox = document.getElementById("banner");
+
+    stops.forEach(function (s, i) {
+      stopSelect.innerHTML += '<option value="' + i + '">' + s.name + '</option>';
+      tableBody.innerHTML +=
+        '<tr><td>' + s.name + '</td><td>' + (s.fare === 0 ? "-" : "Rs " + s.fare) + '</td><td class="st">--</td></tr>';
+    });
+    stopSelect.value = 3;
+
+    const rows = tableBody.querySelectorAll("tr");
+
+    function updateScreen() {
+      const myStop = Number(stopSelect.value);
+      const ticksLeft = stopIndex[myStop] - pos;
+
+      // Arrival time
+      if (ticksLeft > 0) {
+        const minutes = Math.ceil((ticksLeft * SIM_SECONDS_PER_TICK) / 60);
+        etaBox.textContent = minutes + " min";
+      } else if (ticksLeft === 0) {
+        etaBox.textContent = "At your stop";
+      } else {
+        etaBox.textContent = "Bus has passed";
+      }
+      // Alert
+if (ticksLeft > 0 && ticksLeft <= ALERT_TICKS) {
+  bannerBox.textContent = "Bus is arriving soon at " + stops[myStop].name + "!";
+  bannerBox.classList.remove("hidden");
+} else if (ticksLeft <= 0 && ticksLeft >= -5) {
+  bannerBox.textContent = "Bus has reached " + stops[myStop].name + ".";
+  bannerBox.classList.remove("hidden");
+} else {
+  bannerBox.classList.add("hidden");
+}
+
+      // Next stop of the bus
+      let nextIdx = -1;
+      for (let i = 0; i < stops.length; i++) {
+        if (stopIndex[i] >= pos) {
+          nextIdx = i;
+          break;
+        }
+      }
+      nextStopBox.textContent = nextIdx >= 0 ? stops[nextIdx].name : "--";
+
+      // Table: highlight your stop and show Passed / Next / Upcoming
+      rows.forEach(function (row, i) {
+        let status = "Upcoming";
+        if (i < nextIdx) status = "Passed";
+        if (i === nextIdx) status = "Next";
+        const cell = row.querySelector(".st");
+        cell.textContent = status;
+        cell.className = "st " + status;
+        row.className = (i === myStop) ? "active" : "";
+      });
+
+      // Crowd level (saved by the driver page or the camera page)
+      const level = localStorage.getItem("crowd") || "empty";
+      crowdBox.textContent = level.charAt(0).toUpperCase() + level.slice(1);
+      crowdBox.className = "crowd " + level;
+    }
+
+    // ---------- 8. Move the bus ----------
+    function moveBus() {
+      pos = pos + 1;
+      if (pos >= path.length) {
+        pos = 0;
+      }
+      bus.setLatLng(path[pos]);
+      updateScreen();
+    }
+
+    stopSelect.addEventListener("change", updateScreen);
+    updateScreen();
+    setInterval(moveBus, 400);
+  </script>
+</body>
+</html>
