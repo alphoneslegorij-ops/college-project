@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Driver Page</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 400px; margin: 30px auto; padding: 0 16px; }
+    button { display: block; width: 100%; padding: 18px; margin: 12px 0; font-size: 18px; font-weight: bold; color: white; border: 0; border-radius: 8px; cursor: pointer; }
+    .e { background: #2e9e5b; }
+    .m { background: #e0a100; }
+    .f { background: #d64545; }
+  </style>
+</head>
+<body>
+  <h2>Driver Page</h2>
+  <p>How crowded is the bus right now?</p>
+  <button class="e" onclick="setCrowd('empty')">Empty</button>
+  <button class="m" onclick="setCrowd('moderate')">Moderate crowd</button>
+  <button class="f" onclick="setCrowd('full')">Full</button>
+  <p id="status"></p>
+
+  <script>
+    function setCrowd(level) {
+      localStorage.setItem("crowd", level);
+      showStatus();
+    }
+    function showStatus() {
+      document.getElementById("status").textContent =
+        "Current level: " + (localStorage.getItem("crowd") || "empty");
+    }
+    showStatus();
+  </script>
+</body>
+</html>
