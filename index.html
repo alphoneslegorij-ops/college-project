@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Bus Monitoring</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f8ff;
+            color: #172554;
+        }
+
+        /* Navigation Bar */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 8%;
+            background: white;
+        }
+
+        .logo {
+            font-size: 23px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #334155;
+            margin-left: 28px;
+            font-weight: 600;
+        }
+
+        .nav-links .login {
+            background: #2563eb;
+            color: white;
+            padding: 11px 22px;
+            border-radius: 7px;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 60px 8%;
+            gap: 40px;
+        }
+
+        .hero-content {
+            max-width: 600px;
+        }
+
+        .hero-content h1 {
+            font-size: 48px;
+            line-height: 1.2;
+            margin-bottom: 22px;
+        }
+
+        .hero-content h1 span {
+            color: #2563eb;
+        }
+
+        .hero-content p {
+            color: #64748b;
+            font-size: 17px;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        .start-btn {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            padding: 15px 28px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .hero-image {
+            font-size: 150px;
+            text-align: center;
+            flex: 1;
+        }
+
+        /* Features */
+        .features {
+            text-align: center;
+            padding: 50px 8%;
+        }
+
+        .features h2 {
+            font-size: 30px;
+            margin-bottom: 30px;
+        }
+
+        .feature-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 250px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .feature-card h3 {
+            margin: 15px 0;
+        }
+
+        .feature-card p {
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: #64748b;
+        }
+
+        /* Mobile View */
+        @media (max-width: 700px) {
+            nav {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .nav-links a {
+                margin-left: 10px;
+                font-size: 14px;
+            }
+
+            .hero {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .hero-content h1 {
+                font-size: 36px;
+            }
+
+            .hero-image {
+                font-size: 100px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <div class="logo">🚌 SmartBus</div>
+
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="#features">Features</a>
+            <a href="/login" class="login">Login</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+
+        <div class="hero-content">
+            <h1>
+                Travel Smarter with
+                <span>Smart Bus Monitoring</span>
+            </h1>
+
+            <p>
+                Check bus crowd levels, track bus locations,
+                and predict arrival times with our AI-powered
+                public transport monitoring system.
+            </p>
+
+            <a href="/login" class="start-btn">Get Started →</a>
+        </div>
+
+        <div class="hero-image">
+            🚌
+        </div>
+
+    </section>
+
+    <section class="features" id="features">
+
+        <h2>Our Smart Features</h2>
+
+        <div class="feature-container">
+
+            <div class="feature-card">
+                <div style="font-size:40px;">🤖</div>
+                <h3>AI Crowd Detection</h3>
+                <p>Automatically estimate bus crowd levels using AI video analysis.</p>
+            </div>
+
+            <div class="feature-card">
+                <div style="font-size:40px;">📍</div>
+                <h3>Live Bus Tracking</h3>
+                <p>View bus locations on an interactive map.</p>
+            </div>
+
+            <div class="feature-card">
+                <div style="font-size:40px;">⏰</div>
+                <h3>Arrival Prediction</h3>
+                <p>View estimated bus arrival times and approaching alerts.</p>
+            </div>
+
+        </div>
+
+    </section>
+
+    <footer>
+        © 2026 SmartBus Monitoring System | College Final Year Project
+    </footer>
+
+</body>
+</html>
